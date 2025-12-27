@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:mobil_prog_proje/models/session_model.dart';
+import 'package:mobil_prog_proje/screens/timer_screen.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
 import '../services/database_service.dart';
@@ -34,36 +36,48 @@ class DashboardScreen extends StatelessWidget {
       body: Column(
         children: [
           // Üst Bilgi Kartı
-          Container(
-            padding: const EdgeInsets.all(20),
-            margin: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFF6C63FF),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.timer, color: Colors.white, size: 40),
-                const SizedBox(width: 16),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text(
-                      "Bugünkü Çalışma",
-                      style: TextStyle(color: Colors.white70),
-                    ),
-                    Text(
-                      "0 dk",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
+          StreamBuilder<List<SessionModel>>(
+            stream: dbService.getTodaySessions(user!.uid),
+            builder: (context, snapshot) {
+              int totalMinutes = 0;
+              if (snapshot.hasData) {
+                for (var session in snapshot.data!) {
+                  totalMinutes += session.durationMinutes;
+                }
+              }
+
+              return Container(
+                padding: const EdgeInsets.all(20),
+                margin: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF6C63FF),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.timer, color: Colors.white, size: 40),
+                    const SizedBox(width: 16),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Bugünkü Çalışma",
+                          style: TextStyle(color: Colors.white70),
+                        ),
+                        Text(
+                          "$totalMinutes dk",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
-            ),
+              );
+            },
           ),
 
           const Padding(
@@ -127,14 +141,34 @@ class DashboardScreen extends StatelessWidget {
                                     fontSize: 16,
                                   ),
                                 ),
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.delete,
-                                    color: Colors.red,
-                                    size: 20,
-                                  ),
-                                  onPressed: () =>
-                                      dbService.deleteGoal(goal.id),
+                                Row(
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.play_circle_fill,
+                                        color: Colors.green,
+                                        size: 30,
+                                      ),
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) =>
+                                                TimerScreen(goal: goal),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.delete,
+                                        color: Colors.red,
+                                        size: 20,
+                                      ),
+                                      onPressed: () =>
+                                          dbService.deleteGoal(goal.id),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),

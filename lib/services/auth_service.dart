@@ -55,7 +55,6 @@ class AuthService extends ChangeNotifier {
     }
   }
 
-  // ÇIKIŞ YAP (Sign Out)
   Future<void> signOut() async {
     await _firebaseAuth.signOut();
   }

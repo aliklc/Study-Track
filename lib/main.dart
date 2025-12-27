@@ -16,7 +16,6 @@ class StudyTrackApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // MultiProvider, uygulamaya birden fazla servis sağlamamıza yarar.
     return MultiProvider(
       providers: [ChangeNotifierProvider(create: (_) => AuthService())],
       child: MaterialApp(
@@ -27,8 +26,7 @@ class StudyTrackApp extends StatelessWidget {
           useMaterial3: true,
           textTheme: GoogleFonts.poppinsTextTheme(),
         ),
-        // Artık direkt AuthWrapper'ı başlatıyoruz.
-        // O içeride giriş yapıp yapmadığına bakıp karar verecek.
+
         home: const AuthWrapper(),
       ),
     );

@@ -2,7 +2,7 @@ class UserModel {
   final String uid;
   final String? email;
   final String? displayName;
-  final String? photoUrl; // YENİ EKLENDİ
+  final String? photoUrl;
 
   UserModel({required this.uid, this.email, this.displayName, this.photoUrl});
 
@@ -11,7 +11,7 @@ class UserModel {
       uid: uid,
       email: data['email'],
       displayName: data['displayName'],
-      photoUrl: data['photoUrl'], // YENİ
+      photoUrl: data['photoUrl'],
     );
   }
 
@@ -20,7 +20,7 @@ class UserModel {
       'uid': uid,
       'email': email,
       'displayName': displayName,
-      'photoUrl': photoUrl, // YENİ
+      'photoUrl': photoUrl,
     };
   }
 }
