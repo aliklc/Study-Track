@@ -4,10 +4,15 @@ import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'services/auth_service.dart';
 import 'screens/auth_wrapper.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+
+  // BU SATIRI EKLE (Türkçe tarih formatını başlatır)
+  await initializeDateFormatting('tr', null);
+
   runApp(const StudyTrackApp());
 }
 

@@ -99,4 +99,29 @@ class DatabaseService {
           }).toList();
         });
   }
+
+  Future<List<SessionModel>> getLast7DaysSessions(String userId) async {
+    final now = DateTime.now();
+    final sevenDaysAgo = now.subtract(const Duration(days: 7));
+
+    // Tarihi gün başlangıcına çekelim (saat 00:00)
+    final startOfSevenDaysAgo = DateTime(
+      sevenDaysAgo.year,
+      sevenDaysAgo.month,
+      sevenDaysAgo.day,
+    );
+
+    final querySnapshot = await _firestore
+        .collection('sessions')
+        .where('userId', isEqualTo: userId)
+        .where(
+          'date',
+          isGreaterThanOrEqualTo: startOfSevenDaysAgo.toIso8601String(),
+        )
+        .get();
+
+    return querySnapshot.docs
+        .map((doc) => SessionModel.fromMap(doc.data()))
+        .toList();
+  }
 }
