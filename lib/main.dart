@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'services/auth_service.dart';
+import 'screens/auth_wrapper.dart';
 
 void main() async {
-  // Flutter motorunun yüklenmesini garantiye alıyoruz
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Firebase'i başlatıyoruz.
-
   await Firebase.initializeApp();
-
   runApp(const StudyTrackApp());
 }
 
@@ -18,22 +16,20 @@ class StudyTrackApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'StudyTrack',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF6C63FF)),
-        useMaterial3: true,
-        textTheme: GoogleFonts.poppinsTextTheme(),
-      ),
-      home: const Scaffold(
-        body: Center(
-          child: Text(
-            "StudyTrack Hazır!\nFirebase Bağlandı.",
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
+    // MultiProvider, uygulamaya birden fazla servis sağlamamıza yarar.
+    return MultiProvider(
+      providers: [ChangeNotifierProvider(create: (_) => AuthService())],
+      child: MaterialApp(
+        title: 'StudyTrack',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF6C63FF)),
+          useMaterial3: true,
+          textTheme: GoogleFonts.poppinsTextTheme(),
         ),
+        // Artık direkt AuthWrapper'ı başlatıyoruz.
+        // O içeride giriş yapıp yapmadığına bakıp karar verecek.
+        home: const AuthWrapper(),
       ),
     );
   }
