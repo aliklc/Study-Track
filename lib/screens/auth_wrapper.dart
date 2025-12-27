@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobil_prog_proje/screens/profile_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth_service.dart';
@@ -24,19 +25,28 @@ class AuthWrapper extends StatelessWidget {
         // Kullanıcı giriş yapmışsa Dashboard (şimdilik geçici ekran)
         if (snapshot.hasData) {
           return Scaffold(
-            appBar: AppBar(title: const Text("Dashboard")),
+            appBar: AppBar(
+              title: const Text("StudyTrack"),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.person),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ProfileScreen(),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
             body: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text("Hoşgeldin, ${snapshot.data?.email}"),
+                  Text("Hoşgeldin, ${snapshot.data?.displayName}"),
                   const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: () {
-                      context.read<AuthService>().signOut();
-                    },
-                    child: const Text("Çıkış Yap"),
-                  ),
                 ],
               ),
             ),

@@ -2,20 +2,25 @@ class UserModel {
   final String uid;
   final String? email;
   final String? displayName;
+  final String? photoUrl; // YENİ EKLENDİ
 
-  UserModel({required this.uid, this.email, this.displayName});
+  UserModel({required this.uid, this.email, this.displayName, this.photoUrl});
 
-  // Firebase verisini kendi modelimize çeviren fonksiyon
   factory UserModel.fromMap(Map<String, dynamic> data, String uid) {
     return UserModel(
       uid: uid,
       email: data['email'],
       displayName: data['displayName'],
+      photoUrl: data['photoUrl'], // YENİ
     );
   }
 
-  // Modelimizi Firebase'e gönderirken kullanan fonksiyon
   Map<String, dynamic> toMap() {
-    return {'uid': uid, 'email': email, 'displayName': displayName};
+    return {
+      'uid': uid,
+      'email': email,
+      'displayName': displayName,
+      'photoUrl': photoUrl, // YENİ
+    };
   }
 }
