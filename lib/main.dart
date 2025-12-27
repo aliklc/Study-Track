@@ -10,7 +10,6 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
 
-  // BU SATIRI EKLE (Türkçe tarih formatını başlatır)
   await initializeDateFormatting('tr', null);
 
   runApp(const StudyTrackApp());

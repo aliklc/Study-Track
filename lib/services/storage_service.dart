@@ -22,4 +22,18 @@ class StorageService {
       return null;
     }
   }
+
+  Future<String?> uploadPostImage(File imageFile) async {
+    try {
+      // Benzersiz bir isim oluştur (zaman damgası ile)
+      final String fileName = DateTime.now().millisecondsSinceEpoch.toString();
+      final ref = _storage.ref().child('post_images/$fileName.jpg');
+
+      await ref.putFile(imageFile);
+      return await ref.getDownloadURL();
+    } catch (e) {
+      print("Post resmi yükleme hatası: $e");
+      return null;
+    }
+  }
 }

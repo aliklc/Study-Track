@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:mobil_prog_proje/models/goal_model.dart';
+import 'package:mobil_prog_proje/models/post_model.dart';
 import 'package:mobil_prog_proje/models/session_model.dart';
 import '../models/user_model.dart';
 
@@ -123,5 +124,22 @@ class DatabaseService {
     return querySnapshot.docs
         .map((doc) => SessionModel.fromMap(doc.data()))
         .toList();
+  }
+
+  Future<void> addPost(PostModel post) async {
+    await _firestore.collection('posts').doc(post.id).set(post.toMap());
+  }
+
+  // PAYLAŞIMLARI GETİRME (Canlı Akış)
+  Stream<List<PostModel>> getPosts() {
+    return _firestore
+        .collection('posts')
+        .orderBy('timestamp', descending: true) // En yeni en üstte
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs.map((doc) {
+            return PostModel.fromMap(doc.data());
+          }).toList();
+        });
   }
 }

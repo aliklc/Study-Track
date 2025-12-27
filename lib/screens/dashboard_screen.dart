@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobil_prog_proje/models/session_model.dart';
+import 'package:mobil_prog_proje/screens/community_screen.dart';
 import 'package:mobil_prog_proje/screens/stats_screen.dart';
 import 'package:mobil_prog_proje/screens/timer_screen.dart';
 import 'package:provider/provider.dart';
@@ -23,6 +24,15 @@ class DashboardScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text("StudyTrack Dashboard"),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.people),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const CommunityScreen()),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.bar_chart),
             onPressed: () {
