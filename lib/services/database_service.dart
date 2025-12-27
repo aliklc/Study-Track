@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:mobil_prog_proje/models/goal_model.dart';
 import '../models/user_model.dart';
 
 class DatabaseService {
@@ -35,5 +36,33 @@ class DatabaseService {
       print("Kullanıcı getirme hatası: $e");
       return null;
     }
+  }
+
+  Future<void> addGoal(GoalModel goal) async {
+    try {
+      await _firestore.collection('goals').doc(goal.id).set(goal.toMap());
+    } catch (e) {
+      print("Hedef ekleme hatası: $e");
+      rethrow;
+    }
+  }
+
+  // KULLANICININ HEDEFLERİNİ GETİRME (Stream olarak - Canlı veri)
+  Stream<List<GoalModel>> getUserGoals(String userId) {
+    return _firestore
+        .collection('goals')
+        .where('userId', isEqualTo: userId)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs.map((doc) {
+            return GoalModel.fromMap(doc.data());
+          }).toList();
+        });
+  }
+
+  // HEDEF SİLME (Opsiyonel ama gerekli olur)
+  Future<void> deleteGoal(String goalId) async {
+    await _firestore.collection('goals').doc(goalId).delete();
   }
 }
