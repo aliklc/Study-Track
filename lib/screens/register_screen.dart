@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
+import 'complete_profile_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -29,19 +30,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       final authService = Provider.of<AuthService>(context, listen: false);
 
+      // Kayıt işlemini başlat
       final error = await authService.signUp(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
 
       if (error != null && mounted) {
+        // Hata varsa göster
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(error), backgroundColor: Colors.red),
         );
       } else if (mounted) {
-        Navigator.pop(
+        // BAŞARILI! -> Şimdi Profili Tamamla ekranına gönderiyoruz.
+        // pushReplacement kullanıyoruz ki kullanıcı 'Geri' tuşuna basıp tekrar kayıt ekranına dönemesin.
+        Navigator.pushReplacement(
           context,
-        ); // Başarılıysa giriş ekranına dön (veya direkt içeri al)
+          MaterialPageRoute(
+            builder: (context) => const CompleteProfileScreen(),
+          ),
+        );
       }
     }
   }

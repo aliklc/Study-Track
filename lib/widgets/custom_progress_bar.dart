@@ -14,9 +14,8 @@ class CustomProgressBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Yüzde hesabı (0.0 ile 1.0 arası)
     double percentage = target == 0 ? 0 : (current / target);
-    if (percentage > 1) percentage = 1; // %100'ü geçmesin
+    if (percentage > 1) percentage = 1;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

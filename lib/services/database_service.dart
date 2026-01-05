@@ -7,23 +7,18 @@ import '../models/user_model.dart';
 class DatabaseService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Kullanıcı verisini kaydetme veya güncelleme
   Future<void> saveUser(UserModel user) async {
     try {
       await _firestore
           .collection('users')
           .doc(user.uid)
-          .set(
-            user.toMap(),
-            SetOptions(merge: true), // Varsa güncelle, yoksa oluştur
-          );
+          .set(user.toMap(), SetOptions(merge: true));
     } catch (e) {
       print("Kullanıcı kaydetme hatası: $e");
       rethrow;
     }
   }
 
-  // Kullanıcı verisini çekme
   Future<UserModel?> getUser(String uid) async {
     try {
       DocumentSnapshot doc = await _firestore
@@ -49,7 +44,6 @@ class DatabaseService {
     }
   }
 
-  // KULLANICININ HEDEFLERİNİ GETİRME (Stream olarak - Canlı veri)
   Stream<List<GoalModel>> getUserGoals(String userId) {
     return _firestore
         .collection('goals')
@@ -63,7 +57,6 @@ class DatabaseService {
         });
   }
 
-  // HEDEF SİLME (Opsiyonel ama gerekli olur)
   Future<void> deleteGoal(String goalId) async {
     await _firestore.collection('goals').doc(goalId).delete();
   }
@@ -71,11 +64,9 @@ class DatabaseService {
   Future<void> saveSession(SessionModel session) async {
     final batch = _firestore.batch();
 
-    // 1. Oturumu 'sessions' koleksiyonuna ekle
     final sessionRef = _firestore.collection('sessions').doc(session.id);
     batch.set(sessionRef, session.toMap());
 
-    // 2. İlgili hedefin 'currentMinutes' değerini artır
     final goalRef = _firestore.collection('goals').doc(session.goalId);
     batch.update(goalRef, {
       'currentMinutes': FieldValue.increment(session.durationMinutes),
@@ -86,7 +77,6 @@ class DatabaseService {
 
   Stream<List<SessionModel>> getTodaySessions(String userId) {
     final now = DateTime.now();
-    // Bugünün başlangıcı (Gece 00:00)
     final startOfDay = DateTime(now.year, now.month, now.day);
 
     return _firestore
@@ -105,7 +95,6 @@ class DatabaseService {
     final now = DateTime.now();
     final sevenDaysAgo = now.subtract(const Duration(days: 7));
 
-    // Tarihi gün başlangıcına çekelim (saat 00:00)
     final startOfSevenDaysAgo = DateTime(
       sevenDaysAgo.year,
       sevenDaysAgo.month,
@@ -130,11 +119,10 @@ class DatabaseService {
     await _firestore.collection('posts').doc(post.id).set(post.toMap());
   }
 
-  // PAYLAŞIMLARI GETİRME (Canlı Akış)
   Stream<List<PostModel>> getPosts() {
     return _firestore
         .collection('posts')
-        .orderBy('timestamp', descending: true) // En yeni en üstte
+        .orderBy('timestamp', descending: true)
         .snapshots()
         .map((snapshot) {
           return snapshot.docs.map((doc) {

@@ -86,8 +86,7 @@ class _StatsScreenState extends State<StatsScreen> {
                     child: BarChart(
                       BarChartData(
                         alignment: BarChartAlignment.spaceAround,
-                        maxY:
-                            200, // Grafiğin tavan değeri (ihtiyaca göre artırılabilir)
+                        maxY: 200,
                         barTouchData: BarTouchData(enabled: true),
                         titlesData: FlTitlesData(
                           show: true,
@@ -98,15 +97,11 @@ class _StatsScreenState extends State<StatsScreen> {
                                 final index = value.toInt();
                                 if (index < 0 || index >= _last7Days.length)
                                   return const Text('');
-                                // Tarihi alıp gün ismine çevir (Örn: 'Pt')
                                 final date = _last7Days[index];
                                 return Padding(
                                   padding: const EdgeInsets.only(top: 8.0),
                                   child: Text(
-                                    DateFormat(
-                                      'E',
-                                      'tr',
-                                    ).format(date), // intl paketi gerekli
+                                    DateFormat('E', 'tr').format(date),
                                     style: const TextStyle(fontSize: 12),
                                   ),
                                 );
@@ -115,7 +110,7 @@ class _StatsScreenState extends State<StatsScreen> {
                           ),
                           leftTitles: AxisTitles(
                             sideTitles: SideTitles(showTitles: false),
-                          ), // Sol sayıları gizle
+                          ),
                           topTitles: AxisTitles(
                             sideTitles: SideTitles(showTitles: false),
                           ),

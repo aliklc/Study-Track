@@ -39,7 +39,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _nameController.text = userModel.displayName ?? "";
         _currentPhotoUrl = userModel.photoUrl;
       } else {
-        // Firestore'da kayıt yoksa Auth'dan gelen e-postayı gösterelim
         _nameController.text = user.displayName ?? "";
       }
     }
@@ -58,38 +57,61 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  // Kaydetme İşlemi
   Future<void> _saveProfile() async {
+    FocusScope.of(context).unfocus();
+
     setState(() => _isLoading = true);
+
     final authService = Provider.of<AuthService>(context, listen: false);
     final user = authService.currentUser;
 
-    if (user == null) return;
-
-    String? photoUrl = _currentPhotoUrl;
-
-    // Yeni resim seçildiyse yükle
-    if (_selectedImage != null) {
-      photoUrl = await _storageService.uploadProfileImage(
-        user.uid,
-        _selectedImage!,
-      );
+    if (user == null) {
+      setState(() => _isLoading = false);
+      return;
     }
 
-    final updatedUser = UserModel(
-      uid: user.uid,
-      email: user.email,
-      displayName: _nameController.text.trim(),
-      photoUrl: photoUrl,
-    );
+    try {
+      String? photoUrl = _currentPhotoUrl;
 
-    await _dbService.saveUser(updatedUser);
+      // Yeni resim seçildiyse yükle
+      if (_selectedImage != null) {
+        photoUrl = await _storageService.uploadProfileImage(
+          user.uid,
+          _selectedImage!,
+        );
+      }
 
-    if (mounted) {
-      setState(() => _isLoading = false);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Profil güncellendi!")));
+      final updatedUser = UserModel(
+        uid: user.uid,
+        email: user.email,
+        displayName: _nameController.text.trim(),
+        photoUrl: photoUrl,
+      );
+
+      await _dbService.saveUser(updatedUser);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Profil başarıyla güncellendi!"),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      print("Profil kaydetme hatası: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Bir hata oluştu: $e"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -160,14 +182,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
 
                   const SizedBox(height: 20),
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      showAboutDialog(
+                        context: context,
+                        applicationName: "StudyTrack",
+                        applicationVersion: "1.0.0",
+                        applicationIcon: const Icon(
+                          Icons.school,
+                          size: 50,
+                          color: Color(0xFF6C63FF),
+                        ),
+                        children: [
+                          const Text(
+                            "Bu uygulama Mobil Programlama dersi için geliştirilmiştir.",
+                          ),
+                          const SizedBox(height: 10),
+                          const Text(
+                            "Geliştirici:",
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          const Text("Ali Kılıç"),
+                          const Text("Öğrenci No: 22060325"),
+                        ],
+                      );
+                    },
+                    icon: const Icon(Icons.info_outline),
+                    label: const Text("Uygulama Hakkında"),
+                  ),
+
+                  const SizedBox(height: 20),
                   const Divider(),
                   const SizedBox(height: 10),
 
-                  // Çıkış Yap Butonu
                   TextButton.icon(
                     onPressed: () {
                       context.read<AuthService>().signOut();
-                      Navigator.pop(context); // Ekranı kapat
+                      Navigator.pop(context);
                     },
                     icon: const Icon(Icons.logout, color: Colors.red),
                     label: const Text(

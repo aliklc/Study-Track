@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/intl.dart'; // Tarih formatı için
+import 'package:intl/intl.dart';
 import '../models/post_model.dart';
 import '../services/auth_service.dart';
 import '../services/database_service.dart';
@@ -18,7 +18,6 @@ class CommunityScreen extends StatefulWidget {
 class _CommunityScreenState extends State<CommunityScreen> {
   final DatabaseService _dbService = DatabaseService();
 
-  // --- YENİ GÖNDERİ EKLEME PENCERESİ ---
   void _showAddPostDialog() {
     showDialog(context: context, builder: (context) => const AddPostDialog());
   }
@@ -63,7 +62,6 @@ class _CommunityScreenState extends State<CommunityScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Üst Kısım: Profil Resmi, İsim ve Tarih
                       Row(
                         children: [
                           CircleAvatar(
@@ -100,10 +98,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
                       ),
                       const SizedBox(height: 12),
 
-                      // Mesaj
                       Text(post.message, style: const TextStyle(fontSize: 15)),
 
-                      // Varsa Görsel
                       if (post.postImageUrl != null)
                         Padding(
                           padding: const EdgeInsets.only(top: 12.0),
@@ -158,7 +154,6 @@ class _AddPostDialogState extends State<AddPostDialog> {
 
     final user = context.read<AuthService>().currentUser;
     if (user != null) {
-      // Önce kullanıcının güncel bilgilerini (fotoğrafını/adını) çekelim
       final userDetails = await _dbService.getUser(user.uid);
 
       String? imageUrl;
@@ -177,7 +172,7 @@ class _AddPostDialogState extends State<AddPostDialog> {
       );
 
       await _dbService.addPost(newPost);
-      if (mounted) Navigator.pop(context); // Pencereyi kapat
+      if (mounted) Navigator.pop(context);
     }
   }
 

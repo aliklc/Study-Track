@@ -22,7 +22,7 @@ class DashboardScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("StudyTrack Dashboard"),
+        title: const Text("StudyTrack"),
         actions: [
           IconButton(
             icon: const Icon(Icons.people),

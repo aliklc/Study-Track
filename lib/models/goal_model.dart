@@ -3,7 +3,7 @@ class GoalModel {
   final String userId;
   final String subject; // Örn: Matematik
   final int targetMinutes; // Örn: 60 dakika
-  final int currentMinutes; // Şu ana kadar çalışılan (Sprint 5'te artacak)
+  final int currentMinutes;
   final String period; // 'Günlük' veya 'Haftalık'
   final DateTime createdAt;
 

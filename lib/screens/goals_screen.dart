@@ -27,8 +27,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
 
     final user = context.read<AuthService>().currentUser;
     if (user != null) {
-      final goalId = DateTime.now().millisecondsSinceEpoch
-          .toString(); // Basit ID
+      final goalId = DateTime.now().millisecondsSinceEpoch.toString();
 
       final newGoal = GoalModel(
         id: goalId,
@@ -40,7 +39,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
       );
 
       await _dbService.addGoal(newGoal);
-      if (mounted) Navigator.pop(context); // Ekranı kapat
+      if (mounted) Navigator.pop(context);
     }
   }
 
