@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../models/goal_model.dart';
 import '../models/session_model.dart';
 import '../services/database_service.dart';
@@ -42,10 +41,20 @@ class _TimerScreenState extends State<TimerScreen> {
     _timer?.cancel();
   }
 
-  void _finishSession() async {
+  void _resetTimer() {
+    setState(() {
+      _isActive = false;
+      _seconds = 0;
+    });
     _timer?.cancel();
-    if (_seconds < 60) {
-      // 1 dakikadan azsa kaydetmeyelim
+  }
+
+  // GÜNCELLENDİ: Hem manuel süreyi hem de manuel ders adını alabiliyor
+  void _finishSession({int? manualMinutes, String? manualSubject}) async {
+    _timer?.cancel();
+
+    // Eğer manuel giriş değilse ve sayaç 1 dakikadan azsa kaydetme
+    if (manualMinutes == null && _seconds < 60) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Süre çok kısa, kaydedilmedi.")),
       );
@@ -56,13 +65,17 @@ class _TimerScreenState extends State<TimerScreen> {
     setState(() => _isSaving = true);
 
     try {
-      final int minutes = (_seconds / 60).ceil(); // Yukarı yuvarla
+      // Manuel dakika geldiyse onu kullan, yoksa sayacı dakikaya çevir
+      final int minutes = manualMinutes ?? (_seconds / 60).ceil();
+
+      // Manuel konu adı geldiyse onu kullan, yoksa hedefin adını kullan
+      final String subjectName = manualSubject ?? widget.goal.subject;
 
       final session = SessionModel(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         userId: widget.goal.userId,
         goalId: widget.goal.id,
-        subject: widget.goal.subject,
+        subject: subjectName, // Güncellenen kısım
         durationMinutes: minutes,
         date: DateTime.now(),
       );
@@ -72,7 +85,11 @@ class _TimerScreenState extends State<TimerScreen> {
       if (mounted) {
         Navigator.pop(context); // Dashboard'a dön
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Tebrikler! $minutes dakika çalıştın.")),
+          SnackBar(
+            content: Text(
+              "Tebrikler! $subjectName için $minutes dakika kaydedildi.",
+            ),
+          ),
         );
       }
     } catch (e) {
@@ -85,10 +102,115 @@ class _TimerScreenState extends State<TimerScreen> {
     }
   }
 
+  // GÜNCELLENDİ: Hem Ders Adı hem Süre soran pencere
+  void _showManualEntryDialog() {
+    final minuteController = TextEditingController();
+    // Varsayılan olarak hedefin adını (örn: Matematik) getiriyoruz
+    final subjectController = TextEditingController(text: widget.goal.subject);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Manuel Çalışma Ekle"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              "Zamanlayıcıyı kullanmadan çalışma eklemek üzeresiniz.",
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+            const SizedBox(height: 16),
+
+            // Ders Adı Girişi
+            TextField(
+              controller: subjectController,
+              decoration: const InputDecoration(
+                labelText: "Ders / Konu",
+                hintText: "Örn: Matematik - Türev",
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.book),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Süre Girişi
+            TextField(
+              controller: minuteController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: "Süre (Dakika)",
+                hintText: "Örn: 45",
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.timer),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("İptal"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF6C63FF),
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () {
+              final min = int.tryParse(minuteController.text);
+              final sub = subjectController.text.trim();
+
+              if (min != null && min > 0 && sub.isNotEmpty) {
+                Navigator.pop(context); // Dialogu kapat
+                // Verileri kaydetme fonksiyonuna gönder
+                _finishSession(manualMinutes: min, manualSubject: sub);
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      "Lütfen geçerli bir süre ve ders adı giriniz.",
+                    ),
+                  ),
+                );
+              }
+            },
+            child: const Text("Kaydet"),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("${widget.goal.subject} Çalışılıyor")),
+      appBar: AppBar(
+        title: Text("${widget.goal.subject} Çalışılıyor"),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              vertical: 8.0,
+              horizontal: 12.0,
+            ),
+            child: SizedBox(
+              height: 48,
+              width: 48,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF6C63FF),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: EdgeInsets.zero,
+                ),
+                onPressed: _isActive ? null : _showManualEntryDialog,
+                child: const Icon(Icons.edit_note, size: 28),
+              ),
+            ),
+          ),
+        ],
+      ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -122,53 +244,65 @@ class _TimerScreenState extends State<TimerScreen> {
             if (_isSaving)
               const CircularProgressIndicator()
             else
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+              Column(
                 children: [
-                  if (!_isActive)
-                    ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 30,
-                          vertical: 15,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (!_isActive)
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 30,
+                              vertical: 15,
+                            ),
+                          ),
+                          onPressed: _startTimer,
+                          icon: const Icon(Icons.play_arrow),
+                          label: Text(_seconds == 0 ? "Başlat" : "Devam Et"),
+                        )
+                      else
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.orange,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 30,
+                              vertical: 15,
+                            ),
+                          ),
+                          onPressed: _pauseTimer,
+                          icon: const Icon(Icons.pause),
+                          label: const Text("Duraklat"),
                         ),
-                      ),
-                      onPressed: _startTimer,
-                      icon: const Icon(Icons.play_arrow),
-                      label: Text(_seconds == 0 ? "Başlat" : "Devam Et"),
-                    )
-                  else
-                    ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.orange,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 30,
-                          vertical: 15,
+
+                      const SizedBox(width: 20),
+
+                      // Bitir Butonu
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 30,
+                            vertical: 15,
+                          ),
                         ),
+                        onPressed: _seconds > 0 ? () => _finishSession() : null,
+                        icon: const Icon(Icons.stop),
+                        label: const Text("Bitir"),
                       ),
-                      onPressed: _pauseTimer,
-                      icon: const Icon(Icons.pause),
-                      label: const Text("Duraklat"),
-                    ),
-
-                  const SizedBox(width: 20),
-
-                  // Bitir Butonu (Sadece süre varsa aktif olsun)
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 30,
-                        vertical: 15,
-                      ),
-                    ),
-                    onPressed: _seconds > 0 ? _finishSession : null,
-                    icon: const Icon(Icons.stop),
-                    label: const Text("Bitir"),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  // Sıfırla Butonu
+                  TextButton.icon(
+                    onPressed: _seconds > 0 ? _resetTimer : null,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text("Sayacı Sıfırla"),
+                    style: TextButton.styleFrom(foregroundColor: Colors.grey),
                   ),
                 ],
               ),
