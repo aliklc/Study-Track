@@ -3,6 +3,7 @@ import 'package:mobil_prog_proje/models/goal_model.dart';
 import 'package:mobil_prog_proje/models/post_model.dart';
 import 'package:mobil_prog_proje/models/session_model.dart';
 import '../models/user_model.dart';
+import 'package:mobil_prog_proje/models/comment_model.dart';
 
 class DatabaseService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -129,5 +130,77 @@ class DatabaseService {
             return PostModel.fromMap(doc.data());
           }).toList();
         });
+  }
+
+  // --- POST BEĞENİ İŞLEMLERİ ---
+  Future<void> togglePostLike(
+    String postId,
+    String userId,
+    List<String> likes,
+  ) async {
+    final docRef = _firestore.collection('posts').doc(postId);
+
+    if (likes.contains(userId)) {
+      // Zaten beğenmişse kaldır
+      await docRef.update({
+        'likes': FieldValue.arrayRemove([userId]),
+      });
+    } else {
+      // Beğenmemişse ekle
+      await docRef.update({
+        'likes': FieldValue.arrayUnion([userId]),
+      });
+    }
+  }
+
+  // --- YORUM İŞLEMLERİ ---
+
+  // Yorum Ekleme (Sub-collection olarak yapıyoruz: posts -> comments)
+  Future<void> addComment(CommentModel comment) async {
+    await _firestore
+        .collection('posts')
+        .doc(comment.postId)
+        .collection('comments') // Postun altında 'comments' koleksiyonu
+        .doc(comment.id)
+        .set(comment.toMap());
+  }
+
+  // Yorumları Getirme
+  Stream<List<CommentModel>> getComments(String postId) {
+    return _firestore
+        .collection('posts')
+        .doc(postId)
+        .collection('comments')
+        .orderBy('timestamp', descending: false) // Eskiler üstte
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs.map((doc) {
+            return CommentModel.fromMap(doc.data());
+          }).toList();
+        });
+  }
+
+  // Yorum Beğeni İşlemleri
+  Future<void> toggleCommentLike(
+    String postId,
+    String commentId,
+    String userId,
+    List<String> likes,
+  ) async {
+    final docRef = _firestore
+        .collection('posts')
+        .doc(postId)
+        .collection('comments')
+        .doc(commentId);
+
+    if (likes.contains(userId)) {
+      await docRef.update({
+        'likes': FieldValue.arrayRemove([userId]),
+      });
+    } else {
+      await docRef.update({
+        'likes': FieldValue.arrayUnion([userId]),
+      });
+    }
   }
 }

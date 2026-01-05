@@ -1,47 +1,46 @@
-class PostModel {
+class CommentModel {
   final String id;
+  final String postId; // Hangi postun yorumu
   final String userId;
   final String userName;
   final String? userPhotoUrl;
   final String message;
-  final String? postImageUrl;
   final DateTime timestamp;
-  final List<String> likes; // YENİ: Beğenen kullanıcıların ID'leri
+  final List<String> likes; // Yorumu beğenenler
 
-  PostModel({
+  CommentModel({
     required this.id,
+    required this.postId,
     required this.userId,
     required this.userName,
     this.userPhotoUrl,
     required this.message,
-    this.postImageUrl,
     required this.timestamp,
-    required this.likes, // YENİ
+    required this.likes,
   });
 
   Map<String, dynamic> toMap() {
     return {
       'id': id,
+      'postId': postId,
       'userId': userId,
       'userName': userName,
       'userPhotoUrl': userPhotoUrl,
       'message': message,
-      'postImageUrl': postImageUrl,
       'timestamp': timestamp.toIso8601String(),
-      'likes': likes, // YENİ
+      'likes': likes,
     };
   }
 
-  factory PostModel.fromMap(Map<String, dynamic> map) {
-    return PostModel(
+  factory CommentModel.fromMap(Map<String, dynamic> map) {
+    return CommentModel(
       id: map['id'],
+      postId: map['postId'],
       userId: map['userId'],
       userName: map['userName'] ?? 'İsimsiz',
       userPhotoUrl: map['userPhotoUrl'],
       message: map['message'] ?? '',
-      postImageUrl: map['postImageUrl'],
       timestamp: DateTime.parse(map['timestamp']),
-      // YENİ: Listeyi güvenli bir şekilde çekiyoruz
       likes: List<String>.from(map['likes'] ?? []),
     );
   }

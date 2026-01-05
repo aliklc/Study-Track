@@ -7,6 +7,7 @@ import '../models/post_model.dart';
 import '../services/auth_service.dart';
 import '../services/database_service.dart';
 import '../services/storage_service.dart';
+import '../models/comment_model.dart';
 
 class CommunityScreen extends StatefulWidget {
   const CommunityScreen({super.key});
@@ -22,8 +23,22 @@ class _CommunityScreenState extends State<CommunityScreen> {
     showDialog(context: context, builder: (context) => const AddPostDialog());
   }
 
+  // Yorum Penceresini Açan Fonksiyon
+  void _showCommentsSheet(BuildContext context, PostModel post) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true, // Tam ekran efekti için
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => CommentsSheet(post: post),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final user = context.watch<AuthService>().currentUser;
+
     return Scaffold(
       appBar: AppBar(title: const Text("Topluluk Duvarı")),
       floatingActionButton: FloatingActionButton(
@@ -41,6 +56,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
             return const Center(
               child: Text(
                 "Henüz kimse bir şey paylaşmamış.\nİlk paylaşan sen ol!",
+                textAlign: TextAlign.center,
               ),
             );
           }
@@ -51,6 +67,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
             itemCount: posts.length,
             itemBuilder: (context, index) {
               final post = posts[index];
+              final isLiked = user != null && post.likes.contains(user.uid);
+
               return Card(
                 margin: const EdgeInsets.only(bottom: 16),
                 elevation: 3,
@@ -62,6 +80,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // --- ÜST KISIM: KULLANICI BİLGİSİ ---
                       Row(
                         children: [
                           CircleAvatar(
@@ -98,6 +117,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                       ),
                       const SizedBox(height: 12),
 
+                      // --- İÇERİK ---
                       Text(post.message, style: const TextStyle(fontSize: 15)),
 
                       if (post.postImageUrl != null)
@@ -113,6 +133,50 @@ class _CommunityScreenState extends State<CommunityScreen> {
                             ),
                           ),
                         ),
+
+                      const Divider(height: 30),
+
+                      // --- AKSİYON BUTONLARI (BEĞEN & YORUM) ---
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          // BEĞEN BUTONU
+                          TextButton.icon(
+                            onPressed: user == null
+                                ? null
+                                : () {
+                                    _dbService.togglePostLike(
+                                      post.id,
+                                      user.uid,
+                                      post.likes,
+                                    );
+                                  },
+                            icon: Icon(
+                              isLiked ? Icons.favorite : Icons.favorite_border,
+                              color: isLiked ? Colors.red : Colors.grey,
+                            ),
+                            label: Text(
+                              "${post.likes.length} Beğeni",
+                              style: TextStyle(
+                                color: isLiked ? Colors.red : Colors.grey,
+                              ),
+                            ),
+                          ),
+
+                          // YORUM BUTONU
+                          TextButton.icon(
+                            onPressed: () => _showCommentsSheet(context, post),
+                            icon: const Icon(
+                              Icons.comment_outlined,
+                              color: Colors.grey,
+                            ),
+                            label: const Text(
+                              "Yorum Yap",
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
@@ -125,7 +189,201 @@ class _CommunityScreenState extends State<CommunityScreen> {
   }
 }
 
-// --- ALT PENCERE: GÖNDERİ OLUŞTURMA ---
+// --- YENİ WIDGET: YORUMLAR PENCERESİ ---
+class CommentsSheet extends StatefulWidget {
+  final PostModel post;
+  const CommentsSheet({super.key, required this.post});
+
+  @override
+  State<CommentsSheet> createState() => _CommentsSheetState();
+}
+
+class _CommentsSheetState extends State<CommentsSheet> {
+  final _commentController = TextEditingController();
+  final DatabaseService _dbService = DatabaseService();
+
+  Future<void> _sendComment() async {
+    if (_commentController.text.trim().isEmpty) return;
+
+    final user = context.read<AuthService>().currentUser;
+    if (user != null) {
+      final userDetails = await _dbService.getUser(user.uid);
+
+      final newComment = CommentModel(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        postId: widget.post.id,
+        userId: user.uid,
+        userName: userDetails?.displayName ?? "Kullanıcı",
+        userPhotoUrl: userDetails?.photoUrl,
+        message: _commentController.text.trim(),
+        timestamp: DateTime.now(),
+        likes: [],
+      );
+
+      await _dbService.addComment(newComment);
+      _commentController.clear();
+      // Klavye açık kalsın, belki yine yazar
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Klavye açılınca ekranın yukarı kayması için padding
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final user = context.watch<AuthService>().currentUser;
+
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.75, // Ekranın %75'i
+      padding: EdgeInsets.only(bottom: bottomInset),
+      child: Column(
+        children: [
+          // Başlık ve Kapatma Çubuğu
+          Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const Text(
+            "Yorumlar",
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+          const Divider(),
+
+          // Yorum Listesi
+          Expanded(
+            child: StreamBuilder<List<CommentModel>>(
+              stream: _dbService.getComments(widget.post.id),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Center(
+                    child: Text("Henüz yorum yok. İlk sen yaz!"),
+                  );
+                }
+
+                final comments = snapshot.data!;
+                return ListView.builder(
+                  itemCount: comments.length,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemBuilder: (context, index) {
+                    final comment = comments[index];
+                    final isCommentLiked =
+                        user != null && comment.likes.contains(user.uid);
+
+                    return ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: CircleAvatar(
+                        radius: 18,
+                        backgroundImage: comment.userPhotoUrl != null
+                            ? NetworkImage(comment.userPhotoUrl!)
+                            : null,
+                        child: comment.userPhotoUrl == null
+                            ? const Icon(Icons.person, size: 20)
+                            : null,
+                      ),
+                      title: Row(
+                        children: [
+                          Text(
+                            comment.userName,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            DateFormat('HH:mm', 'tr').format(comment.timestamp),
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                      subtitle: Text(comment.message),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: Icon(
+                              isCommentLiked
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
+                              size: 16,
+                              color: isCommentLiked ? Colors.red : Colors.grey,
+                            ),
+                            onPressed: user == null
+                                ? null
+                                : () {
+                                    _dbService.toggleCommentLike(
+                                      widget.post.id,
+                                      comment.id,
+                                      user.uid,
+                                      comment.likes,
+                                    );
+                                  },
+                          ),
+                          if (comment.likes.isNotEmpty)
+                            Text(
+                              "${comment.likes.length}",
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey,
+                              ),
+                            ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+
+          // Yorum Yazma Alanı
+          Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _commentController,
+                    decoration: InputDecoration(
+                      hintText: "Yorum yaz...",
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[100],
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: _sendComment,
+                  icon: const Icon(Icons.send, color: Color(0xFF6C63FF)),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ... AddPostDialog sınıfı aynı kalacak, sadece PostModel oluştururken likes: [] eklemeyi unutma!
 class AddPostDialog extends StatefulWidget {
   const AddPostDialog({super.key});
 
@@ -134,6 +392,7 @@ class AddPostDialog extends StatefulWidget {
 }
 
 class _AddPostDialogState extends State<AddPostDialog> {
+  // ... Değişkenler aynı ...
   final _messageController = TextEditingController();
   final DatabaseService _dbService = DatabaseService();
   final StorageService _storageService = StorageService();
@@ -164,11 +423,12 @@ class _AddPostDialogState extends State<AddPostDialog> {
       final newPost = PostModel(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         userId: user.uid,
-        userName: userDetails?.displayName ?? user.email ?? "Kullanıcı",
+        userName: userDetails?.displayName ?? "Kullanıcı",
         userPhotoUrl: userDetails?.photoUrl,
         message: _messageController.text.trim(),
         postImageUrl: imageUrl,
         timestamp: DateTime.now(),
+        likes: [], // YENİ: Başlangıçta beğeni yok
       );
 
       await _dbService.addPost(newPost);
