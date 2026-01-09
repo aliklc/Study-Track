@@ -15,6 +15,74 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
+  void _showForgotPasswordDialog() {
+    final emailController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Şifremi Unuttum'),
+        content: TextField(
+          controller: emailController,
+          keyboardType: TextInputType.emailAddress,
+          decoration: const InputDecoration(
+            labelText: 'E-posta adresiniz',
+            hintText: 'ornek@email.com',
+            prefixIcon: Icon(Icons.email_outlined),
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('İptal'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final email = emailController.text.trim();
+              if (email.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Lütfen e-posta adresinizi girin'),
+                    backgroundColor: Colors.orange,
+                  ),
+                );
+                return;
+              }
+
+              final authService = Provider.of<AuthService>(
+                context,
+                listen: false,
+              );
+              final error = await authService.resetPassword(email: email);
+
+              Navigator.pop(context);
+
+              if (error == null) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Şifre sıfırlama bağlantısı e-postanıza gönderildi',
+                      ),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
+              } else {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(error), backgroundColor: Colors.red),
+                  );
+                }
+              }
+            },
+            child: const Text('Gönder'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _login() async {
     if (_formKey.currentState!.validate()) {
       final authService = Provider.of<AuthService>(context, listen: false);
@@ -96,7 +164,12 @@ class _LoginScreenState extends State<LoginScreen> {
                           style: TextStyle(fontSize: 16),
                         ),
                       ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: _showForgotPasswordDialog,
+                  child: const Text("Şifremi Unuttum"),
+                ),
+                const SizedBox(height: 8),
                 TextButton(
                   onPressed: () {
                     Navigator.push(

@@ -25,12 +25,13 @@ class StudyTrackApp extends StatelessWidget {
       child: MaterialApp(
         title: 'StudyTrack',
         debugShowCheckedModeBanner: false,
+        locale: const Locale('tr', 'TR'),
+        supportedLocales: const [Locale('tr', 'TR'), Locale('en', 'US')],
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF6C63FF)),
           useMaterial3: true,
           textTheme: GoogleFonts.poppinsTextTheme(),
         ),
-
         home: const AuthWrapper(),
       ),
     );

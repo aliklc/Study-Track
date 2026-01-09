@@ -49,7 +49,7 @@ class _TimerScreenState extends State<TimerScreen> {
     _timer?.cancel();
   }
 
-  // GÜNCELLENDİ: Hem manuel süreyi hem de manuel ders adını alabiliyor
+  // Hem manuel süreyi hem de manuel ders adını alabiliyor
   void _finishSession({int? manualMinutes, String? manualSubject}) async {
     _timer?.cancel();
 
@@ -102,7 +102,7 @@ class _TimerScreenState extends State<TimerScreen> {
     }
   }
 
-  // GÜNCELLENDİ: Hem Ders Adı hem Süre soran pencere
+  // Hem Ders Adı hem Süre soran pencere
   void _showManualEntryDialog() {
     final minuteController = TextEditingController();
     // Varsayılan olarak hedefin adını (örn: Matematik) getiriyoruz
