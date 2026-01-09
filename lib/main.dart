@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'services/auth_service.dart';
 import 'screens/auth_wrapper.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -27,6 +28,11 @@ class StudyTrackApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         locale: const Locale('tr', 'TR'),
         supportedLocales: const [Locale('tr', 'TR'), Locale('en', 'US')],
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF6C63FF)),
           useMaterial3: true,
